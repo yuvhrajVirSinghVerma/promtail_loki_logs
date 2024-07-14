@@ -1,14 +1,15 @@
 import express, { NextFunction,Request,Response } from "express";
 import client,{Counter, Gauge} from "prom-client";
-import { createLogger, transports } from "winston";
+import winston, { createLogger, transports } from "winston";
 import LokiTransport from "winston-loki";
 const app = express();
 
 const options = {
     transports: [
       new LokiTransport({
-        host: "http://loki:3100"
-      })
+        host: "http://{YOUR_IP}:3100"
+      }),
+      new winston.transports.File({ filename: 'app.log' }),
     ]
   }
 
@@ -46,7 +47,7 @@ app.use(express.json());
 app.use(counterMiddleware,gaugeMiddleware)
 app.get("/user", (req, res) => {
     try{
-        logger.info("/user called")
+        logger.info("/user called logging from promtail")
         let n=parseInt((Math.random()*10).toString())
         console.log("Math.random()*10 ",(Math.random()*10).toString())
         if(n==5)throw new Error("Internal server error")
@@ -56,7 +57,8 @@ app.get("/user", (req, res) => {
             n
         });
     }catch(e:any){
-        logger.error(`error : ${e.message}`)
+        logger.error("Internal Server Error")
+
         res.status(500).send({
             error: "Internal Server Error",
         });
